@@ -566,10 +566,10 @@
   </div>
 
   <div class="plinko-dock" id="plinkoDock">
-    <div class="plinko-sub" id="plinkoSub">Bàn Plinko — mỗi cụm nổ sẽ thả 1 viên bi</div>
+    <div class="plinko-sub" id="plinkoSub">Plinko board — each winning cluster drops 1 ball</div>
     <div class="plinko-svg-wrap" id="plinkoSvgWrap"></div>
     <div class="plinko-result" id="plinkoResult">&nbsp;</div>
-    <div class="plinko-level-badge" id="plinkoLevelBadge">Level hiện tại: 0</div>
+    <div class="plinko-level-badge" id="plinkoLevelBadge">Current level: 0</div>
   </div>
 </div>
 
@@ -1121,7 +1121,7 @@
     const badge = document.getElementById("plinkoLevelBadge");
     if(!badge) return;
     if(inFreeSpins){ badge.textContent = "FREE GAME — Level 4"; return; }
-    badge.textContent = "Level hiện tại: " + levelReached;
+    badge.textContent = "Current level: " + levelReached;
   }
 
   // Phát effect quét sáng phủ qua thanh level — gọi mỗi khi bảng multiplier Plinko đổi.
@@ -1333,10 +1333,10 @@
     if(level<=0 || level>4) return;
     const title = "LEVEL " + level;
     let content = "";
-    if(level===1) content = "Toàn bộ 1 loại biểu tượng thường sắp đồng loạt biến thành biểu tượng cao cấp tương ứng!";
-    else if(level===2) content = "1 biểu tượng cao cấp sắp biến thành WILD!";
-    else if(level===3) content = "1 biểu tượng cao cấp sắp biến thành WILD!";
-    else if(level===4) content = "1 hình thoi 4 biểu tượng sắp biến toàn bộ thành WILD!";
+    if(level===1) content = "All symbols of one common type are about to transform into their matching premium symbol!";
+    else if(level===2) content = "1 premium symbol is about to turn into WILD!";
+    else if(level===3) content = "1 premium symbol is about to turn into WILD!";
+    else if(level===4) content = "A 4-symbol diamond is about to turn entirely into WILD!";
 
     // 1) Hiện text thông báo feature của level TRƯỚC.
     await showFeatureBanner(title, content, 1800);
@@ -1428,7 +1428,7 @@
     inFreeSpins = true;
     stageEl.classList.add("fs-mode");
     while(freeSpinsRemaining>0){
-      showBanner("🎰 FREE SPIN — còn " + freeSpinsRemaining + " lượt");
+      showBanner("🎰 FREE SPIN — " + freeSpinsRemaining + " left");
       freeSpinsRemaining--;
       updateFsUI();
       await sleep(400);
@@ -1440,13 +1440,13 @@
     levelReached = 0;
     window.PlinkoFeature && window.PlinkoFeature.setLevel(0, false);
     updateLevelBadgeUI();
-    showBanner("Free Spins kết thúc!");
+    showBanner("Free Spins ended!");
   }
 
   // ===================== MAIN SPIN =====================
   async function spin(){
     if(spinning) return;
-    if(balance < bet){ showBanner("Không đủ số dư!"); return; }
+    if(balance < bet){ showBanner("Insufficient balance!"); return; }
     spinning = true; spinBtn.disabled = true; spinBtn.classList.add("is-spinning");
 
     balance -= bet;
@@ -1459,7 +1459,7 @@
     if(band===4){
       freeSpinsRemaining += 4;
       updateFsUI();
-      await showFeatureBanner("FREE SPINS WON", "Bạn đã thắng 4 FREE SPINS!", 2600);
+      await showFeatureBanner("FREE SPINS WON", "You won 4 FREE SPINS!", 2600);
       await runFreeSpins(totalRef);
     }
 
@@ -1713,7 +1713,7 @@ window.PlinkoFeature = (function(){
     const types = (clusterWin.cellTypes && clusterWin.cellTypes.length===size)
       ? clusterWin.cellTypes
       : Array.from({length:size}, ()=>clusterWin.type);
-    if(subEl) subEl.textContent = `${size} bi từ cụm ${clusterWin.type} đang rơi...`;
+    if(subEl) subEl.textContent = `${size} balls from the ${clusterWin.type} cluster are dropping...`;
     if(resultEl) resultEl.textContent = "\u00A0";
 
     // Tạo N ball element, thả song song với lệch nhẹ (stagger) cho đẹp mắt, không chờ lần lượt.
@@ -1738,8 +1738,8 @@ window.PlinkoFeature = (function(){
 
     if(resultEl){
       resultEl.textContent = totalWin >= clusterWin.baseWin
-        ? `${size} bi — TB ${avgMult.toFixed(2)}x — Thắng thêm ${bonusWin.toFixed(2)}!`
-        : `${size} bi — TB ${avgMult.toFixed(2)}x — Giảm nhẹ lần này`;
+        ? `${size} balls — Avg ${avgMult.toFixed(2)}x — Extra win ${bonusWin.toFixed(2)}!`
+        : `${size} balls — Avg ${avgMult.toFixed(2)}x — Slightly reduced this time`;
     }
 
     return bonusWin;
