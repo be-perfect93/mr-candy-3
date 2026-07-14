@@ -93,7 +93,7 @@
   .candy.clearing{opacity:0;transform:scale(.15) rotate(150deg);}
   .candy.transform-flash{animation:flash .5s ease;}
   .candy.feature-transform{animation:featureBurst .75s cubic-bezier(.3,1.4,.4,1);z-index:6;}
-  /* Level 4: LỚP OVERLAY HÌNH THOI THẬT (SVG polygon), đè lên trên #board, chạy random khắp
+  /* Level 3: LỚP OVERLAY HÌNH THOI THẬT (SVG polygon), đè lên trên #board, chạy random khắp
      reel 3x6 trước khi khoá lại vị trí cuối. wrap được đặt left/top/width/height bằng JS
      (positionRhombusLayer) khớp chính xác với 4 ô mà nó đang bao quanh. */
   .rhombus-layer{
@@ -178,6 +178,21 @@
     background-size:100% 100%;
     background-repeat:no-repeat;
     z-index:100;
+  }
+  /* Rung nhẹ cả khung reel mỗi khi multiplier trung bình của Plinko bắn lên — mô phỏng
+     "động đất" nhẹ để tăng cảm giác impact, không quá mạnh để khỏi rối mắt. */
+  .game-frame.reel-shake{
+    animation:reelShake .4s ease-in-out;
+  }
+  @keyframes reelShake{
+    0%{  transform:translate(0,0); }
+    15%{ transform:translate(-3px,1px) rotate(-.2deg); }
+    30%{ transform:translate(3px,-2px) rotate(.2deg); }
+    45%{ transform:translate(-2px,2px) rotate(-.15deg); }
+    60%{ transform:translate(2px,-1px) rotate(.15deg); }
+    75%{ transform:translate(-1px,1px); }
+    90%{ transform:translate(1px,0); }
+    100%{transform:translate(0,0); }
   }
   /* ===== level meter (khung mốc 10/20/40/60 + FG) — lớp trong suốt đè lên phần trên của game-frame ===== */
   .level-panel{
@@ -384,30 +399,43 @@
   }
   .banner.show{opacity:1;transform:translateX(-50%) translateY(4px);}
 
-  /* ===== feature banner (text chạy ngang uốn lượn kiểu Candy Crush, tự fade out) ===== */
+  /* ===== feature banner (popup thông báo level/feature) — GIỜ NẰM GỌN TRONG #gameFrame,
+     không còn phủ toàn viewport (fixed) nữa, nên không thể tràn ra ngoài main game. ===== */
   .feature-banner-wrap{
-    position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
     pointer-events:none; overflow:hidden;
     z-index:200;
+    padding:6%;
+    box-sizing:border-box;
   }
   .feature-banner{
     position:relative;
-    display:flex; flex-direction:column; align-items:center; gap:4px;
-    white-space:nowrap;
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    max-width:100%;
     opacity:0;
     animation: featureBannerMove 2.6s cubic-bezier(.2,.7,.3,1) forwards;
   }
+  /* Không còn trượt ngang theo vw (dễ tràn khung) — giờ chỉ phóng to/mờ dần tại chỗ, luôn nằm
+     gọn trong wrap. Pha fade-out kéo dài hơn hẳn (bắt đầu từ 62% thay vì 78%) để "flow ra"
+     chậm và mượt hơn theo đúng yêu cầu. */
   @keyframes featureBannerMove{
-    0%{   opacity:0; transform:translateX(60vw) scale(.7); }
-    12%{  opacity:1; transform:translateX(0) scale(1.06); }
-    22%{  transform:translateX(0) scale(1); }
-    78%{  opacity:1; transform:translateX(0) scale(1); }
-    100%{ opacity:0; transform:translateX(-55vw) scale(.8); }
+    0%{   opacity:0; transform:scale(.55) translateY(8px); }
+    14%{  opacity:1; transform:scale(1.08) translateY(0); }
+    24%{  transform:scale(1) translateY(0); }
+    62%{  opacity:1; transform:scale(1) translateY(0); }
+    100%{ opacity:0; transform:scale(.92) translateY(-8px); }
   }
   .feature-banner-title{
     font-size:22px; font-weight:900; letter-spacing:1px;
-    color:#fff176; text-shadow:0 3px 8px rgba(0,0,0,.7), 0 0 14px rgba(255,241,118,.6);
+    color:#fff8d6;
+    text-shadow:0 3px 8px rgba(0,0,0,.8), 0 0 16px rgba(255,225,120,.85);
     display:flex;
+    padding:7px 20px;
+    background:linear-gradient(180deg, rgba(255,205,60,.32), rgba(120,60,10,.4));
+    border:2px solid rgba(255,224,130,.9);
+    border-radius:14px;
+    box-shadow:0 4px 14px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.25);
+    white-space:nowrap;
   }
   .feature-banner-title span{
     display:inline-block;
@@ -420,7 +448,9 @@
   .feature-banner-content{
     font-size:13.5px; color:#eaf6ff; text-align:center;
     text-shadow:0 2px 6px rgba(0,0,0,.7);
-    max-width:min(84vw, 360px);
+    max-width:min(90%, 340px);
+    white-space:normal;
+    word-wrap:break-word;
     background:rgba(10,25,50,.55);
     padding:5px 14px; border-radius:12px;
   }
@@ -488,6 +518,28 @@
     transition:transform .15s ease, filter .15s ease;
   }
   .plinko-slot.hit{ transform:translateY(-3px) scale(1.05); filter:brightness(1.25); }
+  /* Free game: thay vì hue thường, các ô multiplier chuyển thành style "kim cương" — nền
+     trắng-xanh băng lấp lánh, có dải sáng chạy ngang liên tục (shimmer) mô phỏng ánh phản
+     chiếu trên mặt kim cương. */
+  .plinko-slot.diamond{
+    background:linear-gradient(135deg,
+      #eafcff 0%, #bdEFFF 18%, #6fd8ff 38%, #eafcff 52%,
+      #9be8ff 68%, #d8faff 84%, #6fd8ff 100%);
+    background-size:260% 260%;
+    color:#0a3350;
+    text-shadow:0 1px 2px rgba(255,255,255,.9), 0 0 6px rgba(255,255,255,.7);
+    animation:diamondShimmer 2.4s ease-in-out infinite;
+  }
+  /* Khi vừa "lật" số (mult-flip) mà đang ở free game (diamond), chạy CẢ HAI animation cùng lúc —
+     cần selector cụ thể hơn (3 class) để không bị .mult-flip ghi đè mất shimmer. */
+  .plinko-slot.diamond.mult-flip{
+    animation:diamondShimmer 2.4s ease-in-out infinite, plinkoSlotFlip .4s ease;
+  }
+  @keyframes diamondShimmer{
+    0%{ background-position:0% 30%; }
+    50%{ background-position:100% 70%; }
+    100%{ background-position:0% 30%; }
+  }
   /* Đổi bảng multiplier theo level: từng ô nháy sáng + phóng to nhẹ đúng lúc số mới hiện ra,
      chạy trái → phải theo đúng thứ tự vệt sáng quét qua (xem .plinko-sweep-bar bên dưới). */
   .plinko-slot.mult-flip{
@@ -566,11 +618,13 @@
   </div>
 
   <div class="plinko-dock" id="plinkoDock">
-    <div class="plinko-sub" id="plinkoSub">Plinko board — each winning cluster drops 1 ball</div>
+    <div class="plinko-sub" id="plinkoSub"></div>
     <div class="plinko-svg-wrap" id="plinkoSvgWrap"></div>
-    <div class="plinko-result" id="plinkoResult">&nbsp;</div>
-    <div class="plinko-level-badge" id="plinkoLevelBadge">Current level: 0</div>
+    <div class="plinko-result" id="plinkoResult"></div>
+    <div class="plinko-level-badge" id="plinkoLevelBadge"></div>
   </div>
+
+  <div class="feature-banner-wrap" id="featureBannerWrap"></div>
 </div>
 
 <div class="bottom-bar" style="margin-top:16px;">
@@ -600,8 +654,6 @@
 
 </div></div>
 
-<div class="feature-banner-wrap" id="featureBannerWrap"></div>
-
 <script>
 (function(){
   "use strict";
@@ -630,7 +682,10 @@
   const FILL_WEIGHT = [ 35 , 25 , 12 ,  8 ,  8  ,  5  ,  3  ,  2  ,  6  ];
 
   // Mốc số symbol tích luỹ để lên level (kích hoạt tính năng biến symbol tương ứng).
-  const LEVEL_MARKS = [5,10,15,20];
+  // Level 1: 5-9 | Level 2: 10-19 | Level 3: >=20 (không giới hạn trên).
+  const LEVEL_MARKS = [5, 10, 20];
+  // Khi ĐANG ở level 3 mà tổng symbol nổ trong round chạm mốc này -> vào Free Spins.
+  const FREE_GAME_MARK = 30;
 
   // pay per cluster-size tier (× bet)
   const PAY_TABLE = {
@@ -658,8 +713,7 @@
     if(n < LEVEL_MARKS[0]) return 0;
     if(n < LEVEL_MARKS[1]) return 1;
     if(n < LEVEL_MARKS[2]) return 2;
-    if(n < LEVEL_MARKS[3]) return 3;
-    return 4;
+    return 3;
   }
 
 
@@ -671,7 +725,7 @@
   let pendingPlinkoPromises = []; // Plinko chạy NGẦM, không block cascade — round chỉ chờ hết mảng này khi thực sự kết thúc
   let freeSpinsRemaining = 0;
   let inFreeSpins = false;
-  let levelReached = 0;         // level cao nhất đã đạt trong spin hiện tại (0-4) — quyết định bảng Plinko
+  let levelReached = 0;         // level cao nhất đã đạt trong spin hiện tại (0-3) — quyết định bảng Plinko
   let featureAppliedUpTo = 0;   // level cao nhất đã ÁP DỤNG tính năng biến symbol (để chỉ chạy 1 lần/level)
 
   // ===================== DOM =====================
@@ -696,7 +750,9 @@
   const LEVEL_MARK_LEFT_PCT = [24.56, 36.57, 61.68, 85.70];
   const levelPanelEl = document.querySelector(".level-panel");
   const levelBadgeEls = [];
-  LEVEL_MARKS.forEach((v,i)=>{
+  // 3 sao đầu = mốc lên level 1/2/3, sao thứ 4 (vị trí "FG" có sẵn trên asset) = mốc vào Free Game.
+  const BADGE_MARKS = [...LEVEL_MARKS, FREE_GAME_MARK];
+  BADGE_MARKS.forEach((v,i)=>{
     const pct = LEVEL_MARK_LEFT_PCT[i];
     const badge = document.createElement("div");
     badge.className = "star-glow lvl-"+(i+1);
@@ -764,8 +820,8 @@
       levelBadgeEls.forEach(b=>b.el.classList.add("reached"));
       return;
     }
-    const capped = Math.min(n, LEVEL_MARKS[LEVEL_MARKS.length-1]);
-    levelFillEl.style.width = (capped / LEVEL_MARKS[LEVEL_MARKS.length-1] * 100) + "%";
+    const capped = Math.min(n, FREE_GAME_MARK);
+    levelFillEl.style.width = (capped / FREE_GAME_MARK * 100) + "%";
     levelBadgeEls.forEach(b=>b.el.classList.toggle("reached", n>=b.mark));
   }
   function updateFsUI(){
@@ -1118,10 +1174,7 @@
   // (không còn cluster nào), áp dụng ĐÚNG 1 LẦN tính năng biến symbol tương ứng, rồi để vòng
   // avalanche mới kiểm tra lại (vì biến đổi có thể tạo cluster mới ăn tiếp).
   function updateLevelBadgeUI(){
-    const badge = document.getElementById("plinkoLevelBadge");
-    if(!badge) return;
-    if(inFreeSpins){ badge.textContent = "FREE GAME — Level 4"; return; }
-    badge.textContent = "Current level: " + levelReached;
+    // Đã bỏ hiển thị text "Current level: N" / "FREE GAME — Level N" theo yêu cầu (để trống).
   }
 
   // Phát effect quét sáng phủ qua thanh level — gọi mỗi khi bảng multiplier Plinko đổi.
@@ -1176,7 +1229,7 @@
     });
   }
 
-  // Level 4: 1 "lớp" hình thoi gồm 4 ô (1 ô trụ ở cột nhô + trái/phải cùng hàng + 1 ô cùng cột
+  // Level 3: 1 "lớp" hình thoi gồm 4 ô (1 ô trụ ở cột nhô + trái/phải cùng hàng + 1 ô cùng cột
   // kề dọc) — hình dạng này khớp đúng độ lệch nửa-ô của cột so le nên nhìn như 1 viên kim cương.
   // Trước khi chốt vị trí cuối, MỘT LỚP OVERLAY HÌNH THOI THẬT (SVG) chạy random qua nhiều vị trí
   // trên bàn cờ (nhìn thấy rõ như 1 khung kim cương phát sáng di chuyển), rồi mới khoá lại ở 1 vị
@@ -1330,27 +1383,25 @@
 
   // Áp dụng tính năng đúng 1 lần cho level vừa đạt (gọi SAU KHI cascade hiện tại hết win hẳn).
   async function applyLevelFeatureOnce(level){
-    if(level<=0 || level>4) return;
+    if(level<=0 || level>3) return;
     const title = "LEVEL " + level;
     let content = "";
     if(level===1) content = "All symbols of one common type are about to transform into their matching premium symbol!";
     else if(level===2) content = "1 premium symbol is about to turn into WILD!";
-    else if(level===3) content = "1 premium symbol is about to turn into WILD!";
-    else if(level===4) content = "A 4-symbol diamond is about to turn entirely into WILD!";
+    else if(level===3) content = "A 4-symbol diamond is about to turn entirely into WILD!";
 
     // 1) Hiện text thông báo feature của level TRƯỚC.
     await showFeatureBanner(title, content, 1800);
 
-    // 2) Sau khi text đã hiện xong, mới áp dụng biến đổi symbol tương ứng.
-    if(level===1) await featureLowToHigh();
-    else if(level===2) await featureHighToWild();
-    else if(level===3) await featureHighToWild();
-    else if(level===4) await featureRhombusWild();
-
-    // 3) Bảng multiplier Plinko đổi theo level mới — phủ 1 effect biến đổi (sweep) qua thanh level.
+    // 2) Sau khi banner xong: bảng multiplier Plinko (+ sweep) và hiệu ứng biến đổi symbol
+    //    phải chạy CÙNG LÚC — không chờ cái này xong mới chạy cái kia.
     window.PlinkoFeature && window.PlinkoFeature.setLevel(level, false);
     triggerLevelBarSweep();
     updateLevelBadgeUI();
+
+    if(level===1) await featureLowToHigh();
+    else if(level===2) await featureHighToWild();
+    else if(level===3) await featureRhombusWild();
   }
 
   // ===================== ONE FULL ROUND (spin or free-spin) =====================
@@ -1362,12 +1413,16 @@
 
     let fillWaitMs = 0;
     if(freeGame){
-      // Free game: board vẫn reset mỗi spin (reel cố định 3x6, không còn khái niệm "giữ hình
-      // dạng cũ" vì không có gì để giữ — luôn full 3x6 ngay từ đầu)
-      resetBoard();
-      fillWaitMs = fillColumns();
-      levelReached = 4; // free game: luôn cố định ở level cuối cùng (level 4 — bảng multiplier cao nhất)
-      window.PlinkoFeature && window.PlinkoFeature.setLevel(4, true);
+      if(opts.carryBoard){
+        // Free spin ĐẦU TIÊN: giữ nguyên board ở trạng thái cuối cùng của base game — không
+        // reset/fill lại. Bàn đã settle xong (không còn cụm nào) nên sẽ vào thẳng vòng feature.
+      } else {
+        // Các free spin sau: reset board đầy đủ như bình thường.
+        resetBoard();
+        fillWaitMs = fillColumns();
+      }
+      levelReached = 3; // free game: luôn cố định ở level cao nhất (level 3 — bảng multiplier "free")
+      window.PlinkoFeature && window.PlinkoFeature.setLevel(3, true);
       triggerLevelBarSweep();
       updateLevelBadgeUI();
     } else {
@@ -1402,7 +1457,7 @@
       }
 
       // ----- non-free game: kiểm tra có vừa đạt mốc mới không (chỉ 1 mốc/lần, thấp nhất trước) -----
-      const capBand = Math.min(levelBand(clearedThisRound), 4);
+      const capBand = levelBand(clearedThisRound);
       if(levelReached < capBand){
         levelReached++;
         await applyLevelFeatureOnce(levelReached);
@@ -1419,20 +1474,23 @@
       await Promise.all(pendingPlinkoPromises);
     }
 
-    const band = levelBand(clearedThisRound);
     updateLevelUI(clearedThisRound);
-    return band;
+    // Trả về tổng số symbol đã nổ trong round (không phải band) — spin() tự so với
+    // FREE_GAME_MARK (mốc 30) để quyết định có vào Free Spins hay không.
+    return clearedThisRound;
   }
 
   async function runFreeSpins(totalRef){
     inFreeSpins = true;
     stageEl.classList.add("fs-mode");
+    let isFirstFreeSpin = true; // lượt free spin đầu tiên sẽ giữ nguyên board từ base game
     while(freeSpinsRemaining>0){
       showBanner("🎰 FREE SPIN — " + freeSpinsRemaining + " left");
       freeSpinsRemaining--;
       updateFsUI();
       await sleep(400);
-      await playRound(totalRef, {freeGame:true});
+      await playRound(totalRef, {freeGame:true, carryBoard:isFirstFreeSpin});
+      isFirstFreeSpin = false;
       await sleep(300);
     }
     inFreeSpins = false;
@@ -1454,9 +1512,9 @@
     const totalRef = {value:0};
     updateHUD(0); updateLevelUI(0); updateLevelBadgeUI();
 
-    const band = await playRound(totalRef);
+    const clearedCount = await playRound(totalRef);
 
-    if(band===4){
+    if(clearedCount >= FREE_GAME_MARK){
       freeSpinsRemaining += 4;
       updateFsUI();
       await showFeatureBanner("FREE SPINS WON", "You won 4 FREE SPINS!", 2600);
@@ -1514,17 +1572,44 @@ window.PlinkoFeature = (function(){
   // Bảng multiplier Plinko giờ ĐỔI TOÀN BỘ theo level đạt được (không còn levelMultiplier nhân
   // riêng nữa). Mỗi bộ có 7 giá trị đối xứng quanh khay giữa (khay giữa luôn = 0x).
   const SLOT_TABLES = {
-    0: [0.5, 0.2, 0.1, 0, 0.1, 0.2, 0.5],   // level 0 (dưới 10)
-    1: [1,   0.5, 0.2, 0, 0.2, 0.5, 1],     // level 1 (10-20)
-    2: [2,   1,   0.2, 0, 0.2, 1,   2],     // level 2 (20-40)
-    3: [20,  2,   1,   0, 1,   2,   20],    // level 3 (40-60)
-    4: [30,  3,   1,   0, 1,   3,   30],    // level 4 (hình thoi WILD — mốc cao nhất ngoài free game)
-    free: [50, 2, 1, 0, 1, 2, 50]           // free game
+    0: [0.5, 0.2, 0.1, 0, 0.1, 0.2, 0.5],   // level 0 (dưới 5)
+    1: [1,   0.5, 0.2, 0, 0.2, 0.5, 1],     // level 1 (5-9)
+    2: [2,   1,   0.2, 0, 0.2, 1,   2],     // level 2 (10-19)
+    3: [30,  3,   1,   0, 1,   3,   30],    // level 3 (>=20 — gồm cả feature hình thoi WILD)
+    free: [50, 2, 1, 0, 1, 2, 50]           // free game (đạt mốc 30 khi đang ở level 3)
   };
   let currentLevel = 0;
   let currentFreeGame = false;
   function activeSlotMult(){
     return currentFreeGame ? SLOT_TABLES.free : (SLOT_TABLES[currentLevel] || SLOT_TABLES[0]);
+  }
+  // Dải màu theo LEVEL (không còn theo vị trí ô nữa): xanh lá -> xanh da trời -> tím -> đỏ,
+  // càng lên level cao thì cả hàng multiplier càng chuyển tông màu nóng/mạnh hơn.
+  // Free game KHÔNG dùng hue nữa — chuyển hẳn sang style "kim cương" lấp lánh (xem applySlotColor).
+  const LEVEL_HUES = [135, 205, 280, 350]; // level 0,1,2,3: green -> sky blue -> purple -> red
+  function levelBaseHue(){
+    return LEVEL_HUES[Math.min(currentLevel, LEVEL_HUES.length-1)] ?? LEVEL_HUES[0];
+  }
+  // Vẫn giữ kiểu gradient sáng-trên/tối-dưới như cũ cho từng ô, chỉ khác là hue lấy theo LEVEL;
+  // độ bão hoà/độ sáng lệch nhẹ theo khoảng cách tới rìa để giữ chiều sâu (rìa = multiplier cao
+  // nhất nên rực hơn, giữa = multiplier thấp/0 nên dịu hơn).
+  function slotGradient(hue, i){
+    const distFromEdge = Math.abs(i-(SLOT_COUNT-1)/2);
+    const sat = 55 + distFromEdge*10;
+    const lightTop = 58 + distFromEdge*3;
+    const lightBot = 38 + distFromEdge*3;
+    return `linear-gradient(180deg, hsl(${hue} ${sat}% ${lightTop}%), hsl(${hue} ${sat}% ${lightBot}%))`;
+  }
+  // Áp màu cho 1 ô: level thường -> gradient theo hue; free game -> style kim cương lấp lánh
+  // (class CSS .diamond, có shimmer chạy ngang liên tục) thay vì màu đỏ như trước.
+  function applySlotColor(el, i){
+    if(currentFreeGame){
+      el.classList.add("diamond");
+      el.style.background = "";
+    } else {
+      el.classList.remove("diamond");
+      el.style.background = slotGradient(levelBaseHue(), i);
+    }
   }
   function setLevel(level, freeGame){
     currentLevel = level || 0;
@@ -1539,12 +1624,13 @@ window.PlinkoFeature = (function(){
       void sweepBarEl.offsetWidth; // reflow để animation restart được nếu đổi level liên tiếp
       sweepBarEl.classList.add("sweep-active");
     }
-    // 2) Từng ô cập nhật số multiplier mới cho level tương ứng, chạy trái → phải theo stagger,
+    // 2) Từng ô cập nhật số multiplier mới + màu theo level mới, chạy trái → phải theo stagger,
     //    đồng bộ với vệt sáng vừa quét qua.
     const staggerMs = 45;
     slotEls.forEach((el,i)=>{
       setTimeout(()=>{
         el.textContent = table[i] + "x";
+        applySlotColor(el, i);
         el.classList.remove("mult-flip");
         void el.offsetWidth;
         el.classList.add("mult-flip");
@@ -1598,8 +1684,7 @@ window.PlinkoFeature = (function(){
     for(let i=0;i<SLOT_COUNT;i++){
       const el = document.createElement("div");
       el.className = "plinko-slot";
-      const hue = 40 - Math.abs(i-(SLOT_COUNT-1)/2)*7;
-      el.style.background = `linear-gradient(180deg, hsl(${hue} 85% 68%), hsl(${hue} 75% 48%))`;
+      applySlotColor(el, i);
       el.textContent = table[i] + "x";
       slotsRow.appendChild(el);
       slotEls.push(el);
@@ -1635,6 +1720,15 @@ window.PlinkoFeature = (function(){
 
   // Sau khi cả đợt bi rơi xong, cho multiplier TRUNG BÌNH của đợt đó bay lên và phát sáng
   // trên toàn màn hình game (gắn vào #gameFrame, không chỉ trong khung Plinko) rồi tự biến mất.
+  // Rung nhẹ cả khung game (#gameFrame) — gọi mỗi khi multiplier trung bình Plinko bắn lên.
+  function triggerReelShake(){
+    const frame = document.getElementById("gameFrame");
+    if(!frame) return;
+    frame.classList.remove("reel-shake");
+    void frame.offsetWidth; // reflow để animation restart được nếu bắn liên tiếp
+    frame.classList.add("reel-shake");
+  }
+
   function spawnAvgMultiplierFly(avgMult){
     const frame = document.getElementById("gameFrame");
     if(!frame) return;
@@ -1643,6 +1737,7 @@ window.PlinkoFeature = (function(){
     const rounded = Math.round(avgMult * 100) / 100;
     el.textContent = (rounded % 1 === 0 ? rounded.toFixed(0) : rounded.toFixed(2)) + "X";
     frame.appendChild(el);
+    triggerReelShake();
     el.addEventListener("animationend", ()=> el.remove());
     // fallback dọn dẹp nếu animationend không bắn (một số trình duyệt/tab ẩn nền)
     setTimeout(()=>{ if(el.parentNode) el.remove(); }, 1600);
@@ -1713,8 +1808,8 @@ window.PlinkoFeature = (function(){
     const types = (clusterWin.cellTypes && clusterWin.cellTypes.length===size)
       ? clusterWin.cellTypes
       : Array.from({length:size}, ()=>clusterWin.type);
-    if(subEl) subEl.textContent = `${size} balls from the ${clusterWin.type} cluster are dropping...`;
-    if(resultEl) resultEl.textContent = "\u00A0";
+    // Đã bỏ hiển thị text "N balls from ... cluster are dropping..." theo yêu cầu (khu vực này để trống).
+    if(resultEl) resultEl.textContent = "";
 
     // Tạo N ball element, thả song song với lệch nhẹ (stagger) cho đẹp mắt, không chờ lần lượt.
     const balls = types.map(()=>createBallEl());
@@ -1736,11 +1831,8 @@ window.PlinkoFeature = (function(){
     // trên màn hình game (không phải từng bi riêng lẻ — mà là kết quả trung bình cuối cùng).
     spawnAvgMultiplierFly(avgMult);
 
-    if(resultEl){
-      resultEl.textContent = totalWin >= clusterWin.baseWin
-        ? `${size} balls — Avg ${avgMult.toFixed(2)}x — Extra win ${bonusWin.toFixed(2)}!`
-        : `${size} balls — Avg ${avgMult.toFixed(2)}x — Slightly reduced this time`;
-    }
+    // Đã bỏ hiển thị text "N balls — Avg X.XXx — ..." theo yêu cầu (khu vực này để trống —
+    // multiplier trung bình vẫn được thể hiện qua hiệu ứng bay lên ở spawnAvgMultiplierFly).
 
     return bonusWin;
   }
