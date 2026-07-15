@@ -387,6 +387,63 @@
   }
   .bb-chevron:disabled, .bb-auto:disabled{ opacity:.5; }
 
+  /* ===== Buy Feature: nút mua tính năng + popup xác nhận ===== */
+  .buy-feature-bar{
+    width:427.6px;
+    display:flex; justify-content:center;
+  }
+  .buy-feature-btn{
+    width:100%;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    padding:9px 14px; border-radius:14px; border:none; cursor:pointer;
+    background:linear-gradient(180deg,#ffe27a,#ff9f1c 60%,#c9720a 100%);
+    box-shadow:0 0 0 2px rgba(255,209,102,.35), 0 4px 0 #8a4d05, 0 6px 14px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.3);
+    color:#4a2400; font-weight:900; font-size:13px; letter-spacing:.4px;
+    transition:transform .08s;
+  }
+  .buy-feature-btn:active{ transform:translateY(2px); }
+  .buy-feature-btn:disabled{ opacity:.6; cursor:default; }
+  .buy-feature-btn .bf-icon{ font-size:15px; }
+  .buy-feature-btn .bf-price{
+    background:rgba(74,36,0,.18); padding:2px 8px; border-radius:8px; font-size:12px;
+  }
+
+  .modal-overlay{
+    position:fixed; inset:0; z-index:500;
+    background:rgba(8,3,18,.72);
+    display:none; align-items:center; justify-content:center;
+    padding:20px;
+  }
+  .modal-overlay.show{ display:flex; }
+  .modal-card{
+    width:290px; max-width:100%;
+    background:linear-gradient(180deg,#2c1a4d,#160b2a);
+    border-radius:18px; padding:22px 20px;
+    box-shadow:0 0 0 3px rgba(255,209,102,.4), 0 14px 34px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.06);
+    text-align:center;
+  }
+  .modal-title{
+    font-size:18px; font-weight:900; color:#ffd166;
+    text-shadow:0 2px 4px rgba(0,0,0,.5);
+    margin-bottom:10px;
+  }
+  .modal-desc{ font-size:13.5px; line-height:1.55; color:#e7d9ff; margin-bottom:20px; }
+  .modal-desc b{ color:#ffe27a; }
+  .modal-btns{ display:flex; gap:10px; }
+  .modal-btn{
+    flex:1; padding:11px 0; border-radius:12px; border:none; cursor:pointer;
+    font-weight:800; font-size:13.5px; transition:transform .08s;
+  }
+  .modal-btn:active{ transform:translateY(2px); }
+  .modal-btn-cancel{
+    background:linear-gradient(180deg,#4a4a68,#2a2a42); color:#fff;
+    box-shadow:0 3px 0 #17172a;
+  }
+  .modal-btn-confirm{
+    background:linear-gradient(180deg,#ffe27a,#ff9f1c); color:#4a2400;
+    box-shadow:0 3px 0 #8a4d05;
+  }
+
   .banner{
     position:absolute;top:6px;left:50%;transform:translateX(-50%);
     background:linear-gradient(180deg,#ff5ea8,#ff2d78);
@@ -577,11 +634,12 @@
     text-align:center; font-size:12px; font-weight:800; color:#ffe27a;
     text-shadow:0 1px 3px rgba(0,0,0,.6);
   }
-  /* Multiplier trung bình của cả đợt bi Plinko rơi xong — bay lên và phát sáng trên màn hình game. */
+  /* Multiplier trung bình của cả đợt bi Plinko rơi xong — bay lên và phát sáng, giờ CHỈ
+     trong phạm vi khung Plinko (không tràn ra toàn màn hình game như trước). */
   .fly-multiplier{
-    position:absolute; left:50%; bottom:40%;
+    position:absolute; left:50%; bottom:22%;
     transform:translate(-50%,0) scale(.5);
-    font-size:30px; font-weight:900; color:#fff9d6;
+    font-size:26px; font-weight:900; color:#fff9d6;
     text-shadow:0 0 8px #ffe27a, 0 0 22px #ffb700, 0 2px 4px rgba(0,0,0,.7);
     z-index:80; pointer-events:none; white-space:nowrap;
     animation:flyMultiplierUp 1.4s cubic-bezier(.2,.8,.3,1) forwards;
@@ -590,8 +648,8 @@
     0%{  opacity:0;   transform:translate(-50%,0) scale(.5); }
     14%{ opacity:1;   transform:translate(-50%,0) scale(1.3); }
     26%{ opacity:1;   transform:translate(-50%,0) scale(1); }
-    85%{ opacity:1;   transform:translate(-50%,-260px) scale(1.1); }
-    100%{opacity:0;   transform:translate(-50%,-300px) scale(1.1); }
+    85%{ opacity:1;   transform:translate(-50%,-130px) scale(1.1); }
+    100%{opacity:0;   transform:translate(-50%,-150px) scale(1.1); }
   }
 </style>
 </head>
@@ -627,6 +685,14 @@
   <div class="feature-banner-wrap" id="featureBannerWrap"></div>
 </div>
 
+<div class="buy-feature-bar" style="margin-top:14px;">
+  <button class="buy-feature-btn" id="buyFeatureBtn">
+    <span class="bf-icon">🎁</span>
+    <span class="bf-label">BUY FEATURE</span>
+    <span class="bf-price">100x</span>
+  </button>
+</div>
+
 <div class="bottom-bar" style="margin-top:16px;">
   <div class="bb-stat">
     <span class="bb-label">BALANCE</span>
@@ -653,6 +719,19 @@
 </div>
 
 </div></div>
+
+<div class="modal-overlay" id="buyFeatureOverlay">
+  <div class="modal-card">
+    <div class="modal-title">Buy Feature</div>
+    <div class="modal-desc">
+      Buy 4 Free Spins for <b><span id="buyFeatureCost">100.00</span></b> (100x bet)?
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn modal-btn-cancel" id="buyFeatureCancel">Cancel</button>
+      <button class="modal-btn modal-btn-confirm" id="buyFeatureConfirm">Confirm</button>
+    </div>
+  </div>
+</div>
 
 <script>
 (function(){
@@ -742,6 +821,12 @@
   const fsRemainingEl = document.getElementById("fsRemaining");
   const fsBadgeEl = document.getElementById("fsBadge");
   const featureBannerWrap = document.getElementById("featureBannerWrap");
+  const buyFeatureBtn = document.getElementById("buyFeatureBtn");
+  const buyFeatureOverlay = document.getElementById("buyFeatureOverlay");
+  const buyFeatureCostEl = document.getElementById("buyFeatureCost");
+  const buyFeatureCancelBtn = document.getElementById("buyFeatureCancel");
+  const buyFeatureConfirmBtn = document.getElementById("buyFeatureConfirm");
+  const BUY_FEATURE_MULT = 100; // giá mua feature = 100x bet hiện tại
 
   // Vị trí % (theo chiều rộng .game-frame) của 4 ngôi sao đã VẼ SẴN trong ảnh nền reel_update1.png —
   // đo trực tiếp từ ảnh gốc (916x1570), theo THỨ TỰ mốc (không phụ thuộc giá trị số của mốc):
@@ -1218,12 +1303,15 @@
     });
   }
 
-  // Level 2 & 3: biến 1 highpay bất kỳ thành WILD
+  // Level 2 & 3: chọn ngẫu nhiên 1 loại highpay đang có trên bàn, rồi biến TẤT CẢ ô cùng loại đó
+  // đồng loạt thành WILD (không còn chỉ 1 ô ngẫu nhiên nữa) — cùng pattern với featureLowToHigh.
   async function featureHighToWild(){
-    const candidates = shuffle(getAllCells().filter(cell=>HIGHPAY.has(cell.type)));
-    if(candidates.length===0) return;
-    const cell = candidates[0];
-    await staggeredTransform([cell], c=>{
+    const allCells = getAllCells();
+    const presentHighTypes = [...new Set(allCells.filter(cell=>HIGHPAY.has(cell.type)).map(cell=>cell.type))];
+    if(presentHighTypes.length===0) return;
+    const chosenType = presentHighTypes[Math.floor(Math.random()*presentHighTypes.length)];
+    const cells = shuffle(allCells.filter(cell=>cell.type===chosenType));
+    await staggeredTransform(cells, c=>{
       c.type = "WILD";
       setOrbClass(c);
     });
@@ -1387,7 +1475,7 @@
     const title = "LEVEL " + level;
     let content = "";
     if(level===1) content = "All symbols of one common type are about to transform into their matching premium symbol!";
-    else if(level===2) content = "1 premium symbol is about to turn into WILD!";
+    else if(level===2) content = "All symbols of one premium type are about to turn into WILD!";
     else if(level===3) content = "A 4-symbol diamond is about to turn entirely into WILD!";
 
     // 1) Hiện text thông báo feature của level TRƯỚC.
@@ -1506,6 +1594,7 @@
     if(spinning) return;
     if(balance < bet){ showBanner("Insufficient balance!"); return; }
     spinning = true; spinBtn.disabled = true; spinBtn.classList.add("is-spinning");
+    buyFeatureBtn.disabled = true;
 
     balance -= bet;
     avalancheCount = 0;
@@ -1523,10 +1612,50 @@
 
     if(totalRef.value>0) showBanner("WIN "+totalRef.value.toFixed(2));
     spinning = false; spinBtn.disabled = false; spinBtn.classList.remove("is-spinning");
+    buyFeatureBtn.disabled = false;
 
     if(autoPlay && balance>=bet) setTimeout(spin, 550);
     else if(autoPlay){ autoPlay=false; autoBtn.classList.remove("active"); }
   }
+
+  // ===================== BUY FEATURE =====================
+  // Mua thẳng 4 Free Spins với giá = bet × BUY_FEATURE_MULT (100x). Feature trong Free Spins
+  // (Diamond Wild ở level 3, bảng multiplier Plinko "free") giữ nguyên y hệt khi trúng tự nhiên —
+  // chỉ khác là được cấp thẳng, không cần đạt mốc điểm trong game chính.
+  async function buyFeature(){
+    if(spinning) return;
+    const cost = +(bet * BUY_FEATURE_MULT).toFixed(2);
+    if(balance < cost){ showBanner("Insufficient balance!"); return; }
+
+    spinning = true; spinBtn.disabled = true; buyFeatureBtn.disabled = true;
+
+    balance -= cost;
+    freeSpinsRemaining += 4;
+    updateHUD(0);
+    updateFsUI();
+
+    const totalRef = {value:0};
+    await showFeatureBanner("FREE SPINS BOUGHT", "You bought 4 FREE SPINS!", 2200);
+    await runFreeSpins(totalRef);
+
+    if(totalRef.value>0) showBanner("WIN "+totalRef.value.toFixed(2));
+    spinning = false; spinBtn.disabled = false; buyFeatureBtn.disabled = false;
+  }
+
+  buyFeatureBtn.addEventListener("click", ()=>{
+    if(spinning) return;
+    const cost = bet * BUY_FEATURE_MULT;
+    if(balance < cost){ showBanner("Insufficient balance!"); return; }
+    buyFeatureCostEl.textContent = cost.toFixed(2);
+    buyFeatureOverlay.classList.add("show");
+  });
+  buyFeatureCancelBtn.addEventListener("click", ()=>{
+    buyFeatureOverlay.classList.remove("show");
+  });
+  buyFeatureConfirmBtn.addEventListener("click", ()=>{
+    buyFeatureOverlay.classList.remove("show");
+    buyFeature();
+  });
 
   // ===================== CONTROLS =====================
   document.getElementById("betMinus").addEventListener("click", ()=>{
@@ -1576,7 +1705,7 @@ window.PlinkoFeature = (function(){
     1: [1,   0.5, 0.2, 0, 0.2, 0.5, 1],     // level 1 (5-9)
     2: [2,   1,   0.2, 0, 0.2, 1,   2],     // level 2 (10-19)
     3: [30,  3,   1,   0, 1,   3,   30],    // level 3 (>=20 — gồm cả feature hình thoi WILD)
-    free: [50, 2, 1, 0, 1, 2, 50]           // free game (đạt mốc 30 khi đang ở level 3)
+    free: [50, 4, 2, 0, 2, 4, 50]           // free game (đạt mốc 30 khi đang ở level 3)
   };
   let currentLevel = 0;
   let currentFreeGame = false;
@@ -1730,13 +1859,14 @@ window.PlinkoFeature = (function(){
   }
 
   function spawnAvgMultiplierFly(avgMult){
-    const frame = document.getElementById("gameFrame");
-    if(!frame) return;
+    const dock = document.getElementById("plinkoDock");
+    if(!dock) return;
     const el = document.createElement("div");
     el.className = "fly-multiplier";
     const rounded = Math.round(avgMult * 100) / 100;
-    el.textContent = (rounded % 1 === 0 ? rounded.toFixed(0) : rounded.toFixed(2)) + "X";
-    frame.appendChild(el);
+    const multStr = (rounded % 1 === 0 ? rounded.toFixed(0) : rounded.toFixed(2)) + "X";
+    el.textContent = "Bonus +" + multStr;
+    dock.appendChild(el);
     triggerReelShake();
     el.addEventListener("animationend", ()=> el.remove());
     // fallback dọn dẹp nếu animationend không bắn (một số trình duyệt/tab ẩn nền)
